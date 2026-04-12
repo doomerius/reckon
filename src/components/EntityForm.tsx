@@ -11,428 +11,157 @@ export default function EntityForm() {
   const isEdit = id && id !== 'new';
   const existing = isEdit ? state.entities.find((e) => e.id === id) : null;
 
-  const [entityType, setEntityType] = useState<EntityType>(
-    existing?.type || 'corporation'
-  );
+  const [entityType, setEntityType] = useState<EntityType>(existing?.type || 'corporation');
   const [name, setName] = useState(existing?.name || '');
   const [description, setDescription] = useState(existing?.description || '');
   const [tags, setTags] = useState(existing?.tags.join(', ') || '');
   const [riskScore, setRiskScore] = useState(existing?.riskScore || 50);
 
-  // Corporation fields
   const [industry, setIndustry] = useState('');
   const [revenue, setRevenue] = useState('');
   const [headquarters, setHeadquarters] = useState('');
   const [ceo, setCeo] = useState('');
   const [employees, setEmployees] = useState('');
-
-  // Government fields
   const [country, setCountry] = useState('');
   const [leader, setLeader] = useState('');
   const [politicalSystem, setPoliticalSystem] = useState('');
   const [gdp, setGdp] = useState('');
-
-  // Person fields
   const [title, setTitle] = useState('');
   const [organization, setOrganization] = useState('');
   const [netWorth, setNetWorth] = useState('');
   const [nationality, setNationality] = useState('');
 
   useEffect(() => {
-    if (existing) {
-      setEntityType(existing.type);
-      setName(existing.name);
-      setDescription(existing.description);
-      setTags(existing.tags.join(', '));
-      setRiskScore(existing.riskScore);
-
-      if (existing.type === 'corporation') {
-        const c = existing as Extract<AnyEntity, { type: 'corporation' }>;
-        setIndustry(c.industry);
-        setRevenue(c.revenue);
-        setHeadquarters(c.headquarters);
-        setCeo(c.ceo);
-        setEmployees(String(c.employees));
-      } else if (existing.type === 'government') {
-        const g = existing as Extract<AnyEntity, { type: 'government' }>;
-        setCountry(g.country);
-        setLeader(g.leader);
-        setPoliticalSystem(g.politicalSystem);
-        setGdp(g.gdp);
-      } else {
-        const p = existing as Extract<AnyEntity, { type: 'person' }>;
-        setTitle(p.title);
-        setOrganization(p.organization);
-        setNetWorth(p.netWorth);
-        setNationality(p.nationality);
-      }
+    if (!existing) return;
+    setEntityType(existing.type);
+    setName(existing.name);
+    setDescription(existing.description);
+    setTags(existing.tags.join(', '));
+    setRiskScore(existing.riskScore);
+    if (existing.type === 'corporation') {
+      const c = existing as Extract<AnyEntity, { type: 'corporation' }>;
+      setIndustry(c.industry); setRevenue(c.revenue); setHeadquarters(c.headquarters); setCeo(c.ceo); setEmployees(String(c.employees));
+    } else if (existing.type === 'government') {
+      const g = existing as Extract<AnyEntity, { type: 'government' }>;
+      setCountry(g.country); setLeader(g.leader); setPoliticalSystem(g.politicalSystem); setGdp(g.gdp);
+    } else {
+      const p = existing as Extract<AnyEntity, { type: 'person' }>;
+      setTitle(p.title); setOrganization(p.organization); setNetWorth(p.netWorth); setNationality(p.nationality);
     }
   }, [existing]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const now = new Date().toISOString();
-    const parsedTags = tags
-      .split(',')
-      .map((t) => t.trim())
-      .filter(Boolean);
-
+    const parsedTags = tags.split(',').map((t) => t.trim()).filter(Boolean);
     const base = {
       id: isEdit ? id! : `${entityType.slice(0, 3)}-${Date.now()}`,
-      name,
-      description,
-      riskScore,
-      tags: parsedTags,
-      metadata: {},
-      createdAt: existing?.createdAt || now,
-      updatedAt: now,
+      name, description, riskScore, tags: parsedTags, metadata: {},
+      createdAt: existing?.createdAt || now, updatedAt: now,
     };
 
     let entity: AnyEntity;
     switch (entityType) {
-      case 'corporation':
-        entity = {
-          ...base,
-          type: 'corporation',
-          industry,
-          revenue,
-          headquarters,
-          ceo,
-          employees: Number(employees) || 0,
-        };
-        break;
-      case 'government':
-        entity = {
-          ...base,
-          type: 'government',
-          country,
-          leader,
-          politicalSystem,
-          gdp,
-        };
-        break;
-      case 'person':
-        entity = {
-          ...base,
-          type: 'person',
-          title,
-          organization,
-          netWorth,
-          nationality,
-        };
-        break;
+      case 'corporation': entity = { ...base, type: 'corporation', industry, revenue, headquarters, ceo, employees: Number(employees) || 0 }; break;
+      case 'government': entity = { ...base, type: 'government', country, leader, politicalSystem, gdp }; break;
+      case 'person': entity = { ...base, type: 'person', title, organization, netWorth, nationality }; break;
     }
 
-    if (isEdit) {
-      dispatch({ type: 'UPDATE_ENTITY', payload: entity });
-    } else {
-      dispatch({ type: 'ADD_ENTITY', payload: entity });
-    }
-
+    dispatch({ type: isEdit ? 'UPDATE_ENTITY' : 'ADD_ENTITY', payload: entity });
     navigate(`/entities/${entity.id}`);
   };
 
+  const riskColor = riskScore >= 75 ? '#ef4444' : riskScore >= 50 ? '#f97316' : riskScore >= 25 ? '#eab308' : '#22c55e';
+
   return (
-    <div className="p-6 max-w-3xl">
+    <div className="p-6 max-w-3xl animate-fade-in">
       <div className="flex items-center gap-4 mb-6">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 rounded-lg hover:bg-surface-800 text-surface-400 hover:text-white transition-colors"
-        >
+        <button onClick={() => navigate(-1)} className="p-2 rounded-lg transition-colors" style={{ color: 'var(--text-tertiary)' }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-elevated)'; e.currentTarget.style.color = 'white'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-tertiary)'; }}>
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-2xl font-bold text-white">
-          {isEdit ? 'Edit Entity' : 'New Entity'}
-        </h1>
+        <h1 className="text-xl font-bold text-white tracking-tight">{isEdit ? 'Edit Entity' : 'New Entity'}</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Basic Info */}
+      <form onSubmit={handleSubmit} className="space-y-5">
         <div className="card p-5 space-y-4">
-          <h2 className="text-lg font-semibold text-white">
-            Basic Information
-          </h2>
-
+          <h2 className="text-sm font-semibold text-white">Basic Information</h2>
           {!isEdit && (
             <div>
-              <label className="text-sm text-surface-300 mb-1 block">
-                Entity Type
-              </label>
-              <select
-                value={entityType}
-                onChange={(e) => setEntityType(e.target.value as EntityType)}
-                className="select-field w-full"
-              >
+              <label className="text-xs mb-1 block" style={{ color: 'var(--text-tertiary)' }}>Type</label>
+              <select value={entityType} onChange={(e) => setEntityType(e.target.value as EntityType)} className="select-field w-full">
                 <option value="corporation">Corporation</option>
                 <option value="government">Government</option>
                 <option value="person">Person</option>
               </select>
             </div>
           )}
-
           <div>
-            <label className="text-sm text-surface-300 mb-1 block">Name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className="input-field"
-              placeholder="Entity name"
-            />
+            <label className="text-xs mb-1 block" style={{ color: 'var(--text-tertiary)' }}>Name</label>
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="input-field" placeholder="Entity name" />
           </div>
-
           <div>
-            <label className="text-sm text-surface-300 mb-1 block">
-              Description
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="input-field min-h-[80px] resize-y"
-              placeholder="Brief description of the entity"
-            />
+            <label className="text-xs mb-1 block" style={{ color: 'var(--text-tertiary)' }}>Description</label>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="input-field min-h-[80px] resize-y" placeholder="Brief description" />
           </div>
-
           <div>
-            <label className="text-sm text-surface-300 mb-1 block">
-              Tags (comma-separated)
-            </label>
-            <input
-              type="text"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              className="input-field"
-              placeholder="e.g., finance, lobbying, tech"
-            />
+            <label className="text-xs mb-1 block" style={{ color: 'var(--text-tertiary)' }}>Tags (comma-separated)</label>
+            <input type="text" value={tags} onChange={(e) => setTags(e.target.value)} className="input-field" placeholder="finance, lobbying, tech" />
           </div>
-
           <div>
-            <label className="text-sm text-surface-300 mb-1 block">
-              Risk Score: {riskScore}
+            <label className="text-xs mb-1 block" style={{ color: 'var(--text-tertiary)' }}>
+              Risk Score: <span className="mono font-semibold" style={{ color: riskColor }}>{riskScore}</span>
             </label>
-            <input
-              type="range"
-              min={0}
-              max={100}
-              value={riskScore}
-              onChange={(e) => setRiskScore(Number(e.target.value))}
-              className="w-full accent-blue-500"
-            />
-            <div className="flex justify-between text-xs text-surface-500 mt-1">
-              <span>0 - Low</span>
-              <span>25 - Medium</span>
-              <span>50 - High</span>
-              <span>75 - Critical</span>
-              <span>100</span>
-            </div>
+            <input type="range" min={0} max={100} value={riskScore} onChange={(e) => setRiskScore(Number(e.target.value))} className="w-full accent-blue-500" />
           </div>
         </div>
 
-        {/* Type-Specific Fields */}
         <div className="card p-5 space-y-4">
-          <h2 className="text-lg font-semibold text-white capitalize">
-            {entityType} Details
-          </h2>
-
+          <h2 className="text-sm font-semibold text-white capitalize">{entityType} Details</h2>
           {entityType === 'corporation' && (
-            <>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm text-surface-300 mb-1 block">
-                    Industry
-                  </label>
-                  <input
-                    type="text"
-                    value={industry}
-                    onChange={(e) => setIndustry(e.target.value)}
-                    className="input-field"
-                    placeholder="e.g., Technology"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm text-surface-300 mb-1 block">
-                    Revenue
-                  </label>
-                  <input
-                    type="text"
-                    value={revenue}
-                    onChange={(e) => setRevenue(e.target.value)}
-                    className="input-field"
-                    placeholder="e.g., $50B"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm text-surface-300 mb-1 block">
-                    Headquarters
-                  </label>
-                  <input
-                    type="text"
-                    value={headquarters}
-                    onChange={(e) => setHeadquarters(e.target.value)}
-                    className="input-field"
-                    placeholder="City, Country"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm text-surface-300 mb-1 block">
-                    CEO
-                  </label>
-                  <input
-                    type="text"
-                    value={ceo}
-                    onChange={(e) => setCeo(e.target.value)}
-                    className="input-field"
-                    placeholder="CEO name"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="text-sm text-surface-300 mb-1 block">
-                  Employees
-                </label>
-                <input
-                  type="number"
-                  value={employees}
-                  onChange={(e) => setEmployees(e.target.value)}
-                  className="input-field"
-                  placeholder="Number of employees"
-                />
-              </div>
-            </>
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Industry" value={industry} onChange={setIndustry} />
+              <Field label="Revenue" value={revenue} onChange={setRevenue} />
+              <Field label="Headquarters" value={headquarters} onChange={setHeadquarters} />
+              <Field label="CEO" value={ceo} onChange={setCeo} />
+              <Field label="Employees" value={employees} onChange={setEmployees} type="number" />
+            </div>
           )}
-
           {entityType === 'government' && (
-            <>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm text-surface-300 mb-1 block">
-                    Country
-                  </label>
-                  <input
-                    type="text"
-                    value={country}
-                    onChange={(e) => setCountry(e.target.value)}
-                    className="input-field"
-                    placeholder="Country name"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm text-surface-300 mb-1 block">
-                    Leader
-                  </label>
-                  <input
-                    type="text"
-                    value={leader}
-                    onChange={(e) => setLeader(e.target.value)}
-                    className="input-field"
-                    placeholder="Head of state"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm text-surface-300 mb-1 block">
-                    Political System
-                  </label>
-                  <input
-                    type="text"
-                    value={politicalSystem}
-                    onChange={(e) => setPoliticalSystem(e.target.value)}
-                    className="input-field"
-                    placeholder="e.g., Federal Republic"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm text-surface-300 mb-1 block">
-                    GDP
-                  </label>
-                  <input
-                    type="text"
-                    value={gdp}
-                    onChange={(e) => setGdp(e.target.value)}
-                    className="input-field"
-                    placeholder="e.g., $500B"
-                  />
-                </div>
-              </div>
-            </>
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Country" value={country} onChange={setCountry} />
+              <Field label="Leader" value={leader} onChange={setLeader} />
+              <Field label="Political System" value={politicalSystem} onChange={setPoliticalSystem} />
+              <Field label="GDP" value={gdp} onChange={setGdp} />
+            </div>
           )}
-
           {entityType === 'person' && (
-            <>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm text-surface-300 mb-1 block">
-                    Title
-                  </label>
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="input-field"
-                    placeholder="e.g., CEO, President"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm text-surface-300 mb-1 block">
-                    Organization
-                  </label>
-                  <input
-                    type="text"
-                    value={organization}
-                    onChange={(e) => setOrganization(e.target.value)}
-                    className="input-field"
-                    placeholder="Associated organization"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm text-surface-300 mb-1 block">
-                    Net Worth
-                  </label>
-                  <input
-                    type="text"
-                    value={netWorth}
-                    onChange={(e) => setNetWorth(e.target.value)}
-                    className="input-field"
-                    placeholder="e.g., $5B"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm text-surface-300 mb-1 block">
-                    Nationality
-                  </label>
-                  <input
-                    type="text"
-                    value={nationality}
-                    onChange={(e) => setNationality(e.target.value)}
-                    className="input-field"
-                    placeholder="Nationality"
-                  />
-                </div>
-              </div>
-            </>
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Title" value={title} onChange={setTitle} />
+              <Field label="Organization" value={organization} onChange={setOrganization} />
+              <Field label="Net Worth" value={netWorth} onChange={setNetWorth} />
+              <Field label="Nationality" value={nationality} onChange={setNationality} />
+            </div>
           )}
         </div>
 
         <div className="flex items-center gap-3">
           <button type="submit" className="btn-primary flex items-center gap-2">
-            <Save className="w-4 h-4" />
-            {isEdit ? 'Save Changes' : 'Create Entity'}
+            <Save className="w-4 h-4" /> {isEdit ? 'Save Changes' : 'Create Entity'}
           </button>
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="btn-secondary"
-          >
-            Cancel
-          </button>
+          <button type="button" onClick={() => navigate(-1)} className="btn-secondary">Cancel</button>
         </div>
       </form>
+    </div>
+  );
+}
+
+function Field({ label, value, onChange, type = 'text' }: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
+  return (
+    <div>
+      <label className="text-xs mb-1 block" style={{ color: 'var(--text-tertiary)' }}>{label}</label>
+      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} className="input-field" />
     </div>
   );
 }
